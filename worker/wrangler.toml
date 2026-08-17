@@ -1,0 +1,14 @@
+name = "nastaliq-bot"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+
+[[kv_namespaces]]
+binding = "PREFS"
+id = "a9668c273c754fa6be8c8b33708e4af2"
+
+# Secrets (set these via `wrangler secret put <NAME>`, do NOT put them here):
+#   TELEGRAM_BOT_TOKEN
+#   TELEGRAM_WEBHOOK_SECRET
+#   GITHUB_TOKEN
+#   GITHUB_OWNER
+#   GITHUB_REPO
