@@ -1,0 +1,95 @@
+name: Render Nastaliq
+
+# Triggered by the Cloudflare Worker's repository_dispatch call
+# (event_type: "nastaliq-render"). See worker/src/index.js.
+on:
+  repository_dispatch:
+    types: [nastaliq-render]
+
+jobs:
+  render-and-send:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to commit rendered images into results/
+    # Untrusted user text arrives via github.event.client_payload.text.
+    # We pass it through `env:` below rather than interpolating it into
+    # any run: script directly -- this is the standard mitigation for
+    # script injection with repository_dispatch payloads.
+    env:
+      NASTALIQ_TEXT: ${{ github.event.client_payload.text }}
+      NASTALIQ_FONT: ${{ github.event.client_payload.font }}
+      NASTALIQ_THEME: ${{ github.event.client_payload.theme }}
+      NASTALIQ_CHAT_ID: ${{ github.event.client_payload.chat_id }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history needed for the rebase-and-retry commit below
+
+      - name: Install Pango/Cairo system deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            libpango-1.0-0 libpangocairo-1.0-0 gir1.2-pango-1.0 \
+            python3-gi python3-gi-cairo python3-cairo fontconfig
+
+      - name: Render image
+        id: render
+        run: |
+          mkdir -p out
+          python3 render.py -o out/render.png
+          echo "Rendered out/render.png"
+
+      - name: Send image to Telegram
+        if: success()
+        run: |
+          curl -sS -f -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto" \
+            -F "chat_id=${NASTALIQ_CHAT_ID}" \
+            -F "photo=@out/render.png" \
+            -F "caption=${NASTALIQ_FONT} / ${NASTALIQ_THEME}"
+
+      - name: Save to results gallery
+        if: success()
+        run: |
+          mkdir -p results
+          TS=$(date -u +%Y%m%d-%H%M%S)
+          FILENAME="results/${TS}-${GITHUB_RUN_ID}.png"
+          cp out/render.png "$FILENAME"
+          python3 scripts/append_result.py "$FILENAME"
+
+      - name: Commit results (race-condition-safe)
+        if: success()
+        run: |
+          git config user.name "nastaliq-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add results/
+
+          # Other concurrent renders may be pushing at the same time, so
+          # retry with a rebase on conflict rather than failing the run.
+          for i in 1 2 3 4 5; do
+            git commit -m "Add render ${GITHUB_RUN_ID}" || true
+            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              echo "Pushed successfully."
+              break
+            fi
+            echo "Push attempt $i failed, retrying..."
+            sleep $(( (RANDOM % 5) + 1 ))
+          done
+
+      - name: Notify chat on failure
+        if: failure()
+        run: |
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${NASTALIQ_CHAT_ID}" \
+            -d "text=متاسفانه در رندر متن مشکلی پیش آمد. لطفاً دوباره امتحان کنید. / Sorry, something went wrong rendering that. Please try again."
+
+      - name: Upload render as artifact (debugging)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nastaliq-render-${{ github.event.client_payload.chat_id }}-${{ github.run_id }}
+          path: out/render.png
+          retention-days: 3
+          if-no-files-found: ignore
