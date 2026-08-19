@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/31241247/README.md)
 # nastaliq-bot 🖋️
 
 A Telegram bot that renders Persian text in **Nastaliq calligraphy**. Fully serverless: a Cloudflare Worker receives the Telegram webhook, dispatches the render job to GitHub Actions, which does the actual typesetting with Pango/Cairo and sends the image back — no server to keep running.
