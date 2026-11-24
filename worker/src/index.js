@@ -25,7 +25,7 @@ function resolveTheme(input) {
 function parseInlineOverrides(text) {
   const match = text.match(/^((?:\s*\w+=\w+\s*)+):\s*([\s\S]+)$/);
   if (!match) {
-    return { font: null, theme: null, cleanText: text };
+    return { font: null, theme: null, sticker: null, cleanText: text };
   }
   const [, flagsPart, body] = match;
   const flags = {};
@@ -36,6 +36,7 @@ function parseInlineOverrides(text) {
   return {
     font: resolveFont(flags.font),
     theme: resolveTheme(flags.theme),
+    sticker: flags.sticker === "true" || flags.transparent === "true" ? true : null,
     cleanText: body.trim(),
   };
 }
@@ -81,19 +82,26 @@ async function sendTelegramPhoto(botToken, chatId, pngBuffer, caption) {
   if (caption) {
     formData.append("caption", caption);
   }
-  const res = await fetch(url, {
-    method: "POST",
-    body: formData,
-  });
-  return res;
+  return fetch(url, { method: "POST", body: formData });
+}
+
+async function sendTelegramDocument(botToken, chatId, pngBuffer, filename, caption) {
+  const url = `https://api.telegram.org/bot${botToken}/sendDocument`;
+  const formData = new FormData();
+  formData.append("chat_id", chatId.toString());
+  formData.append("document", new Blob([pngBuffer], { type: "image/png" }), filename || "nastaliq.png");
+  if (caption) {
+    formData.append("caption", caption);
+  }
+  return fetch(url, { method: "POST", body: formData });
 }
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // 1. Web Page & Assets
-    if (request.method === "GET") {
+    // 1. Web Page & Assets (GET & HEAD)
+    if (request.method === "GET" || request.method === "HEAD") {
       if (url.pathname === "/" || url.pathname === "/demo") {
         return new Response(DEMO_HTML, {
           headers: { "Content-Type": "text/html; charset=utf-8" },
@@ -112,21 +120,25 @@ export default {
 
       if (url.pathname === "/api/render") {
         try {
-          const text = url.searchParams.get("text") || "به نام خداوند جان و خرد";
+          const text = url.searchParams.get("text") || "به نام خداوند جان و خرد / کزین برتر اندیشه برنگذرد";
           const theme = url.searchParams.get("theme") || "gold";
           const font = url.searchParams.get("font") || "iran-nastaliq";
           const size = parseInt(url.searchParams.get("size") || "54");
+          const transparent = url.searchParams.get("transparent") === "true";
 
           const res = await renderNastaliq(env, text, {
             theme,
             fontKey: font,
             fontSize: size,
+            transparent
           });
 
           return new Response(res.pngBuffer, {
             headers: {
               "Content-Type": "image/png",
               "Cache-Control": "public, max-age=3600",
+              "X-Poetry": res.isPoetry ? "1" : "0",
+              "X-Dimensions": `${res.width}x${res.height}`
             },
           });
         } catch (err) {
@@ -139,21 +151,25 @@ export default {
     if (request.method === "POST" && url.pathname === "/api/render") {
       try {
         const body = await request.json();
-        const text = body.text || "به نام خداوند جان و خرد";
+        const text = body.text || "به نام خداوند جان و خرد / کزین برتر اندیشه برنگذرد";
         const theme = body.theme || "gold";
         const font = body.font || "iran-nastaliq";
-        const size = parseInt(body.fontSize || "56");
+        const size = parseInt(body.fontSize || "54");
+        const transparent = body.transparent === true;
 
         const res = await renderNastaliq(env, text, {
           theme,
           fontKey: font,
           fontSize: size,
+          transparent
         });
 
         return new Response(res.pngBuffer, {
           headers: {
             "Content-Type": "image/png",
             "Cache-Control": "public, max-age=3600",
+            "X-Poetry": res.isPoetry ? "1" : "0",
+            "X-Dimensions": `${res.width}x${res.height}`
           },
         });
       } catch (err) {
@@ -183,40 +199,57 @@ export default {
       const chatId = message.chat.id;
       const rawText = message.text.trim();
 
-      // Process in background / don't block response to Telegram
       ctx.waitUntil((async () => {
         try {
           if (rawText === "/start" || rawText === "/help") {
             const welcomeText = [
-              "🖋️ *به ربات خطاطی و خوشنویسی نستعلیق خوش آمدید!*",
+              "🖋️ *به ربات خوشنویسی و خطاطی نستعلیق خوش آمدید!*",
               "",
-              "این ربات تماماً بر بستر سرورلس Cloudflare Workers با فناوری WebAssembly و موتور HarfBuzz اجرا می‌شود و در کسری از ثانیه متن شما را خطاطی می‌کند.",
+              "این ربات با هوشمندی کامل، اشعار و متن‌های شما را با اتصالات اصیل نستعلیق در کسری از ثانیه رندر می‌کند.",
               "",
-              "✨ *روش استفاده:*",
-              "کافی است هر متن یا بیتی را به زبان فارسی ارسال کنید تا فوراً تصویر نستعلیق آن برای شما فرستاده شود.",
+              "📜 *قابلیت ویژه نگارش شعر (مصرع و بیت):*",
+              "برای نوشتن دوبیتی یا غزل، بین هر دو مصرع علامت اسلش `/` بگذارید:",
+              "`به نام خداوند جان و خرد / کزین برتر اندیشه برنگذرد`",
+              "`خداوند نام و خداوند جای / خداوند روزی ده رهنمای`",
+              "💡 ربات به صورت خودکار مصرع اول و دوم را روبه‌روی هم با فاصله استاندارد خوشنویسی چیدمان کرده و بین هر بیت فاصله جداگانه می‌اندازد!",
               "",
-              "⚙️ *دستورات تنظیمی:*",
+              "🎨 *دستورات تنظیمی:*",
+              "• /sticker — فعال‌سازی حالت استیکر (پس‌زمینه کاملاً شفاف)",
+              "• /photo — بازگشت به حالت عکس عادی با پس‌زمینه تم",
               "• /fonts — فهرست فونت‌های نستعلیق",
               "• /themes — فهرست تم‌های رنگی",
-              "• `/font iran` یا `/font noto` — تغییر فونت پیش‌فرض",
-              "• `/theme gold` — تغییر تم رنگی پیش‌فرض",
+              "• `/font iran` یا `/font noto` — تنظیم فونت پیش‌فرض",
+              "• `/theme gold` — تنظیم تم رنگی پیش‌فرض",
               "",
-              "⚡ *تغییر موقت بدون دستکاری تنظیمات:*",
-              "`font=noto theme=gold: متن شما`",
+              "⚡ *تنظیمات موقت بدون تغییر پیش‌فرض:*",
+              "`theme=gold: متن شما`",
+              "`sticker=true: متن شما`",
               "",
-              "🌐 وب‌سایت دمو و تست آنلاین:",
+              "🌐 کارگاه آنلاین و وب‌سایت دمو:",
               "https://nastaliq.startstar.ir"
             ].join("\n");
 
             await sendTelegramText(botToken, chatId, welcomeText);
 
-            // Render a welcome calligraphy piece
-            const welcomeRender = await renderNastaliq(env, "به نام خداوند جان و خرد", {
+            // Send sample couplet demo
+            const sampleRender = await renderNastaliq(env, "به نام خداوند جان و خرد / کزین برتر اندیشه برنگذرد\nخداوند نام و خداوند جای / خداوند روزی ده رهنمای", {
               fontKey: "iran-nastaliq",
               theme: "gold",
-              fontSize: 54
+              fontSize: 52
             });
-            await sendTelegramPhoto(botToken, chatId, welcomeRender.pngBuffer, "🖋️ نمونه خطاطی: به نام خداوند جان و خرد\nتم: طلا و زر | @IRnastaliqbot");
+            await sendTelegramPhoto(botToken, chatId, sampleRender.pngBuffer, "🖋️ نمونه چیدمان دو بیتی با تفکیک مصرع‌ها و ابیات\nتم: طلا و زر | @IRnastaliqbot");
+            return;
+          }
+
+          if (rawText === "/sticker") {
+            await setPref(env, chatId, "sticker", true);
+            await sendTelegramText(botToken, chatId, "✨ *حالت استیکر (پس‌زمینه شفاف) فعال شد!*\nاز این پس خروجی‌ها بدون پس‌زمینه و حاشیه برای ساخت استیکر و چسباندن روی تصاویر ارسال می‌شوند.\nبرای بازگشت به حالت عکس عادی: `/photo`");
+            return;
+          }
+
+          if (rawText === "/photo") {
+            await setPref(env, chatId, "sticker", false);
+            await sendTelegramText(botToken, chatId, "🖼️ *حالت تصویر عادی فعال شد.*\nخروجی‌ها همراه با رنگ پس‌زمینه و کادر تم ارسال خواهند شد.");
             return;
           }
 
@@ -241,6 +274,7 @@ export default {
               "• `rose` — گل سرخ مخملی",
               "• `emerald` — زمردین فاخر",
               "• `azure` — لاجورد درباری",
+              "• `sticker` — استیکر بدون پس‌زمینه (شفاف)",
               "",
               "برای انتخاب: `/theme gold` (یا هر تم دیگر)"
             ].join("\n");
@@ -265,7 +299,7 @@ export default {
             const arg = rawText.replace("/theme", "").trim();
             const resolved = resolveTheme(arg);
             if (!resolved) {
-              await sendTelegramText(botToken, chatId, "❌ تم نامعتبر است. گزینه‌ها: `gold`, `classic`, `night`, `rose`, `emerald`, `azure`");
+              await sendTelegramText(botToken, chatId, "❌ تم نامعتبر است. گزینه‌ها: `gold`, `classic`, `night`, `rose`, `emerald`, `azure`, `sticker`");
               return;
             }
             await setPref(env, chatId, "theme", resolved);
@@ -274,35 +308,43 @@ export default {
             return;
           }
 
-          // Plain text / Calligraphy request
-          const { font: overrideFont, theme: overrideTheme, cleanText } = parseInlineOverrides(rawText);
+          // Plain text / Poetry / Calligraphy request
+          const { font: overrideFont, theme: overrideTheme, sticker: overrideSticker, cleanText } = parseInlineOverrides(rawText);
           if (!cleanText) {
-            await sendTelegramText(botToken, chatId, "لطفاً متنی برای خطاطی وارد کنید.");
+            await sendTelegramText(botToken, chatId, "لطفاً متن یا بیتی برای خطاطی ارسال کنید.");
             return;
           }
 
-          // Send action
           await sendTelegramAction(botToken, chatId, "upload_photo");
 
-          // Get user preferences
           const prefs = await getPrefs(env, chatId);
           const finalFont = overrideFont || prefs.font || DEFAULT_FONT;
           const finalTheme = overrideTheme || prefs.theme || DEFAULT_THEME;
+          const isSticker = overrideSticker !== null ? overrideSticker : (prefs.sticker === true || finalTheme === "sticker" || finalTheme === "transparent");
 
           const rendered = await renderNastaliq(env, cleanText, {
             fontKey: finalFont,
             theme: finalTheme,
-            fontSize: 54
+            fontSize: 54,
+            transparent: isSticker
           });
 
           const fontLabel = FONTS[finalFont]?.name || finalFont;
           const themeLabel = THEMES[finalTheme]?.name || finalTheme;
-          const caption = `🖋️ خط: ${fontLabel} | تم: ${themeLabel}\n🤖 @IRnastaliqbot`;
+          const poetryTag = rendered.isPoetry ? " [قالب شعر]" : "";
+          const caption = isSticker
+            ? `✨ استیکر خوشنویسی نستعلیق${poetryTag}\n🤖 @IRnastaliqbot`
+            : `🖋️ خط: ${fontLabel} | تم: ${themeLabel}${poetryTag}\n🤖 @IRnastaliqbot`;
 
-          await sendTelegramPhoto(botToken, chatId, rendered.pngBuffer, caption);
+          if (isSticker) {
+            // Send as transparent document so Telegram keeps full alpha transparency
+            await sendTelegramDocument(botToken, chatId, rendered.pngBuffer, "nastaliq-sticker.png", caption);
+          } else {
+            await sendTelegramPhoto(botToken, chatId, rendered.pngBuffer, caption);
+          }
         } catch (err) {
           console.error("Worker process error:", err);
-          await sendTelegramText(botToken, chatId, "متاسفانه در تولید تصویر خطاطی مشکلی پیش آمد: " + err.message);
+          await sendTelegramText(botToken, chatId, "متاسفانه در تولید تصویر مشکلی پیش آمد: " + err.message);
         }
       })());
 

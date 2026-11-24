@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>خوشنویسی و خطاطی نستعلیق | ربات تلگرام @IRnastaliqbot</title>
+  <title>خوشنویسی و خطاطی نستعلیق آنلاین | ربات تلگرام @IRnastaliqbot</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -56,7 +56,7 @@
     .subtitle {
       color: var(--text-muted);
       font-size: 1.15rem;
-      max-width: 720px;
+      max-width: 760px;
       margin: 0 auto;
     }
     .grid {
@@ -65,7 +65,7 @@
       gap: 2rem;
       margin-bottom: 3.5rem;
     }
-    @media (max-width: 840px) { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -82,24 +82,30 @@
     }
     textarea {
       width: 100%;
-      height: 110px;
+      height: 120px;
       background: #0d1322;
       border: 1px solid var(--card-border);
       border-radius: 0.75rem;
       color: var(--text);
       padding: 0.85rem;
       font-family: inherit;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       resize: vertical;
       outline: none;
       transition: border-color 0.2s;
     }
     textarea:focus { border-color: var(--gold); }
+    .hint {
+      font-size: 0.82rem;
+      color: #38bdf8;
+      margin-top: 0.35rem;
+      display: block;
+    }
     .presets {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
-      margin-top: 0.5rem;
+      margin-top: 0.6rem;
     }
     .preset-btn {
       background: rgba(255,255,255,0.06);
@@ -127,6 +133,16 @@
       outline: none;
       font-family: inherit;
     }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+      color: var(--text);
+      cursor: pointer;
+      margin-top: 0.75rem;
+    }
+    .checkbox-label input { width: 18px; height: 18px; cursor: pointer; }
     .btn-submit {
       width: 100%;
       background: linear-gradient(135deg, #d4af37 0%, #b89127 100%);
@@ -138,7 +154,7 @@
       border-radius: 0.75rem;
       cursor: pointer;
       transition: transform 0.15s, opacity 0.2s;
-      margin-top: 0.5rem;
+      margin-top: 1rem;
     }
     .btn-submit:hover {
       transform: translateY(-2px);
@@ -225,39 +241,20 @@
       transform: translateY(-2px);
       box-shadow: 0 10px 30px rgba(34, 158, 217, 0.6);
     }
-    .section-title {
-      font-size: 1.7rem;
-      font-weight: 800;
-      color: var(--gold-light);
-      margin-bottom: 1.5rem;
-      text-align: center;
-    }
-    .gallery {
+    .features {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 1.5rem;
       margin-bottom: 3.5rem;
     }
-    .gallery-card {
+    .feat-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 1rem;
-      overflow: hidden;
-      padding: 1rem;
-      text-align: center;
-      transition: transform 0.2s;
+      padding: 1.5rem;
     }
-    .gallery-card:hover { transform: translateY(-4px); }
-    .gallery-card img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 0.6rem;
-      margin-bottom: 0.75rem;
-    }
-    .gallery-desc {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-    }
+    .feat-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .feat-title { font-size: 1.15rem; font-weight: 700; color: var(--gold-light); margin-bottom: 0.5rem; }
     footer {
       text-align: center;
       color: var(--text-muted);
@@ -272,22 +269,22 @@
     <header>
       <div class="badge">✨ ۱۰۰٪ سرورلس روی Cloudflare Workers با فناوری WebAssembly</div>
       <h1>خوشنـویسی و خطاطـی نستـعلیق</h1>
-      <p class="subtitle">تبدیل لحظه‌ای متن فارسی به شاهکار خطاطی نستعلیق با موتور HarfBuzz و شبیه‌سازی اتصالات سنتی خوشنویسی</p>
+      <p class="subtitle">تبدیل هوشمند متن و اشعار فارسی با تفکیک خودکار مصرع‌ها و ابیات (با علامت /) و رندر برداری در لحظه</p>
     </header>
 
-    <!-- Interactive Live Demo -->
     <div class="grid">
       <div class="card">
-        <h2 style="font-size:1.3rem; margin-bottom:1rem; color:var(--gold-light);">🖋️ کارگاه خطاطی زنده</h2>
+        <h2 style="font-size:1.3rem; margin-bottom:0.75rem; color:var(--gold-light);">🖋️ کارگاه نگارش شعر و متن</h2>
         <div class="form-group">
-          <label for="textInput">متن دلخواه شما (فارسی / ابیات شعر):</label>
-          <textarea id="textInput" placeholder="متن خود را اینجا وارد کنید...">به نام خداوند جان و خرد
-کزین برتر اندیشه برنگذرد</textarea>
+          <label for="textInput">متن یا ابیات شعر دلخواه:</label>
+          <textarea id="textInput" placeholder="متن یا شعر را بنویسید...">به نام خداوند جان و خرد / کزین برتر اندیشه برنگذرد
+خداوند نام و خداوند جای / خداوند روزی ده رهنمای</textarea>
+          <span class="hint">💡 نکته شاعران: بین دو مصرع اسلش (/) بگذارید تا خودکار در دو ستون متوازن چیدمان شود.</span>
           <div class="presets">
-            <span style="font-size:0.8rem; color:var(--text-muted); align-self:center;">نمونه‌ها:</span>
+            <span style="font-size:0.8rem; color:var(--text-muted); align-self:center;">اشعار نمونه:</span>
+            <button class="preset-btn" onclick="setPreset('فردوسی')">فردوسی</button>
             <button class="preset-btn" onclick="setPreset('سعدی')">سعدی</button>
             <button class="preset-btn" onclick="setPreset('حافظ')">حافظ</button>
-            <button class="preset-btn" onclick="setPreset('مولانا')">مولانا</button>
             <button class="preset-btn" onclick="setPreset('خیام')">خیام</button>
           </div>
         </div>
@@ -304,8 +301,8 @@
             <label for="themeSelect">تم رنگی:</label>
             <select id="themeSelect">
               <option value="gold" selected>زرین و طلا (Gold)</option>
-              <option value="classic">کلاسیک (کاغذ سنتی)</option>
-              <option value="night">شب نیلی (Night Dark)</option>
+              <option value="classic">کلاسیک (کاغذ کهن)</option>
+              <option value="night">شب نیلی (Night)</option>
               <option value="rose">گل سرخ (Rose)</option>
               <option value="emerald">زمردین (Emerald)</option>
               <option value="azure">لاجورد (Azure)</option>
@@ -314,15 +311,20 @@
         </div>
 
         <div class="form-group">
-          <label for="sizeRange">اندازه قلم: <span id="sizeVal">56</span>px</label>
-          <input type="range" id="sizeRange" min="36" max="90" value="56" oninput="document.getElementById('sizeVal').innerText = this.value">
+          <label for="sizeRange">اندازه قلم: <span id="sizeVal">52</span>px</label>
+          <input type="range" id="sizeRange" min="36" max="85" value="52" oninput="document.getElementById('sizeVal').innerText = this.value">
         </div>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="transparentCheck">
+          <span>✨ پس‌زمینه شفاف (حالت استیکر بدون کادر)</span>
+        </label>
 
         <button class="btn-submit" onclick="generate()">🖌️ رندر و خطاطی نستعلیق</button>
       </div>
 
       <div class="card">
-        <h2 style="font-size:1.3rem; margin-bottom:1rem; color:var(--gold-light);">🖼️ پیش‌نمایش تصویر خروجی</h2>
+        <h2 style="font-size:1.3rem; margin-bottom:0.75rem; color:var(--gold-light);">🖼️ خروجی تصویر رندر شده</h2>
         <div class="preview-box">
           <div id="spinner" class="spinner"></div>
           <img id="previewImg" class="preview-img" alt="Nastaliq Render" src="images/ferdowsi-classic.png">
@@ -334,56 +336,52 @@
       </div>
     </div>
 
-    <!-- Telegram Bot Call to Action -->
     <div class="telegram-banner">
       <h2 style="font-size:1.8rem; margin-bottom:0.75rem; color:white;">ربات تلگرام @IRnastaliqbot فعال و آنلاین است!</h2>
       <p style="color:rgba(255,255,255,0.85); max-width:650px; margin:0 auto;">
-        بدون هیچ زحمتی، در تلگرام به آیدی <strong>@IRnastaliqbot</strong> پیام دهید تا همان لحظه قطعه خطاطی شده را با بالاترین کیفیت تحویل بگیرید.
+        در تلگرام هر بیتی را با علامت اسلش (/) بفرستید تا فوراً قطعه خطاطی‌شده با چیدمان شعر سنتی و کیفیت بالا برای شما ارسال شود.
       </p>
       <a href="https://t.me/IRnastaliqbot" target="_blank" class="btn-telegram">
         <span>💬 ورود به ربات @IRnastaliqbot</span>
       </a>
     </div>
 
-    <!-- Gallery of Renders -->
-    <h2 class="section-title">گالری نمونه‌های رندر شده با تم‌های متنوع</h2>
-    <div class="gallery">
-      <div class="gallery-card">
-        <img src="images/hafez-gold.png" alt="حافظ - تم طلا">
-        <div class="gallery-desc"><strong>حافظ شیرازی</strong> — تم طلا و زر (Gold)</div>
+    <div class="features">
+      <div class="feat-card">
+        <div class="feat-icon">📜</div>
+        <div class="feat-title">قالب‌بندی هوشمند شعر با اسلش</div>
+        <p style="color:var(--text-muted); font-size:0.95rem;">
+          با قرار دادن علامت / بین مصرع‌ها، مصرع اول و دوم به صورت خودکار روبه‌روی هم قرار گرفته و بین هر بیت فاصله جداگانه می‌افتد.
+        </p>
       </div>
-      <div class="gallery-card">
-        <img src="images/ferdowsi-classic.png" alt="فردوسی - تم کلاسیک">
-        <div class="gallery-desc"><strong>شاهنامه فردوسی</strong> — تم کلاسیک و کاغذ کاهی</div>
+      <div class="feat-card">
+        <div class="feat-icon">✨</div>
+        <div class="feat-title">حالت استیکر (بدون پس‌زمینه)</div>
+        <p style="color:var(--text-muted); font-size:0.95rem;">
+          امکان تولید خروجی با پس‌زمینه کاملاً شفاف با دستور /sticker در تلگرام یا دکمه استیکر در سایت جهت درج روی تصاویر و استوری.
+        </p>
       </div>
-      <div class="gallery-card">
-        <img src="images/saadi-night.png" alt="سعدی - تم شب نیلی">
-        <div class="gallery-desc"><strong>سعدی شیرازی</strong> — تم شب نیلی (Night)</div>
-      </div>
-      <div class="gallery-card">
-        <img src="images/molana-rose.png" alt="مولانا - تم گل سرخ">
-        <div class="gallery-desc"><strong>مولانای بلخی</strong> — تم گل سرخ (Rose)</div>
-      </div>
-      <div class="gallery-card">
-        <img src="images/khayyam-emerald.png" alt="خیام - تم زمردین">
-        <div class="gallery-desc"><strong>حکیم عمر خیام</strong> — تم زمردین (Emerald)</div>
+      <div class="feat-card">
+        <div class="feat-icon">⚡</div>
+        <div class="feat-title">اجرای ۱۰۰٪ لبه‌ای در کلودفلر</div>
+        <p style="color:var(--text-muted); font-size:0.95rem;">
+          بدون وابستگی به هیچ سرور اختصاصی؛ موتور ترکیبی HarfBuzz WebAssembly و Resvg در کمتر از ۵۰ میلی‌ثانیه تصویر نهایی را می‌سازد.
+        </p>
       </div>
     </div>
 
     <footer>
       <p>طراحی و توسعه یافته توسط <strong>startStar</strong> | دامنه رسمی: <strong>nastaliq.startstar.ir</strong></p>
-      <p style="margin-top:0.4rem; font-size:0.8rem; color:#64748b;">Cloudflare Workers + HarfBuzz WebAssembly + Resvg | Telegram: @IRnastaliqbot</p>
+      <p style="margin-top:0.4rem; font-size:0.8rem; color:#64748b;">Telegram Bot: @IRnastaliqbot | MIT License</p>
     </footer>
   </div>
 
   <script>
-    const API_BASE = 'https://nastaliq-bot.a77aslani.workers.dev';
-
     const presets = {
-      'سعدی': 'تن آدمی شریف است به جان آدمیت\\nنه همین لباس زیباست نشان آدمیت',
-      'حافظ': 'در ازل پرتو حسنت ز تجلی دم زد\\nعشق پیدا شد و آتش به همه عالم زد',
-      'مولانا': 'بشنو این نی چون شکایت می‌کند\\nاز جدایی‌ها حکایت می‌کند',
-      'خیام': 'ابر آمد و زار بر سر سبزه گریست\\nبی باده گلرنگ نمی‌شاید زیست'
+      'فردوسی': 'به نام خداوند جان و خرد / کزین برتر اندیشه برنگذرد\\nخداوند نام و خداوند جای / خداوند روزی ده رهنمای',
+      'سعدی': 'تن آدمی شریف است به جان آدمیت / نه همین لباس زیباست نشان آدمیت\\nاگر آدمی به چشم است و دهان و گوش و بینی / چه میان نقش دیوار و میان آدمیت',
+      'حافظ': 'در ازل پرتو حسنت ز تجلی دم زد / عشق پیدا شد و آتش به همه عالم زد\\nجلوه‌ای کرد رخت دید ملک عشق نداشت / عین آتش شد از این غیرت و بر آدم زد',
+      'خیام': 'ابر آمد و زار بر سر سبزه گریست / بی باده گلرنگ نمی‌شاید زیست\\nاین سبزه که امروز تماشاگه ماست / تا سبزه خاک ما تماشاگه کیست'
     };
 
     function setPreset(name) {
@@ -401,6 +399,7 @@
       const font = document.getElementById('fontSelect').value;
       const theme = document.getElementById('themeSelect').value;
       const size = document.getElementById('sizeRange').value;
+      const transparent = document.getElementById('transparentCheck').checked;
 
       const previewImg = document.getElementById('previewImg');
       const spinner = document.getElementById('spinner');
@@ -409,10 +408,16 @@
       spinner.style.display = 'block';
 
       try {
-        const resp = await fetch(API_BASE + '/api/render', {
+        const resp = await fetch('https://nastaliq-bot.a77aslani.workers.dev/api/render', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, font, theme, fontSize: parseInt(size) })
+          body: JSON.stringify({
+            text,
+            font,
+            theme,
+            fontSize: parseInt(size),
+            transparent
+          })
         });
         if (!resp.ok) throw new Error(await resp.text());
         const blob = await resp.blob();
