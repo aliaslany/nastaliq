@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>خوشنویسی و خطاطی نستعلیق | ربات تلگرام @IRnastaliqbot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'IranNastaliq';
+      src: url('fonts/IranNastaliq.ttf') format('truetype');
+      font-display: swap;
+    }
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #151d30;
+      --card-border: #233152;
+      --gold: #d4af37;
+      --gold-light: #f3e5ab;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background: radial-gradient(circle at 50% 0%, #1e2942 0%, var(--bg) 80%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2.5rem 1rem;
+      line-height: 1.6;
+    }
+    .container { max-width: 1080px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 2.5rem; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(212, 175, 55, 0.15);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      color: var(--gold-light);
+      padding: 0.4rem 1.25rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, var(--gold-light) 60%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.75rem;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 3.5rem;
+    }
+    @media (max-width: 840px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1.25rem;
+      padding: 1.75rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .form-group { margin-bottom: 1.25rem; }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+    textarea {
+      width: 100%;
+      height: 110px;
+      background: #0d1322;
+      border: 1px solid var(--card-border);
+      border-radius: 0.75rem;
+      color: var(--text);
+      padding: 0.85rem;
+      font-family: inherit;
+      font-size: 1.1rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--gold); }
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .preset-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text-muted);
+      padding: 0.3rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preset-btn:hover {
+      background: rgba(212, 175, 55, 0.2);
+      border-color: var(--gold);
+      color: var(--gold-light);
+    }
+    .row { display: flex; gap: 1rem; }
+    select, input[type="range"] {
+      width: 100%;
+      background: #0d1322;
+      border: 1px solid var(--card-border);
+      border-radius: 0.75rem;
+      color: var(--text);
+      padding: 0.65rem 0.85rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #d4af37 0%, #b89127 100%);
+      color: #000;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 0.85rem;
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.2s;
+      margin-top: 0.5rem;
+    }
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(212,175,55,0.4);
+    }
+    .preview-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 320px;
+      background: #090d16;
+      border: 1px dashed var(--card-border);
+      border-radius: 1rem;
+      overflow: hidden;
+      padding: 1.5rem;
+      position: relative;
+    }
+    .preview-img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.75rem;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+      transition: opacity 0.3s;
+    }
+    .spinner {
+      display: none;
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(212,175,55,0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.25rem;
+      width: 100%;
+    }
+    .btn-action {
+      flex: 1;
+      text-align: center;
+      text-decoration: none;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-action:hover {
+      background: rgba(255,255,255,0.15);
+      border-color: rgba(255,255,255,0.3);
+    }
+    .telegram-banner {
+      background: linear-gradient(135deg, rgba(34, 158, 217, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border: 1px solid rgba(34, 158, 217, 0.4);
+      border-radius: 1.25rem;
+      padding: 2.25rem 1.5rem;
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+    .btn-telegram {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: #229ed9;
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.15rem;
+      padding: 0.9rem 2.2rem;
+      border-radius: 999px;
+      box-shadow: 0 6px 25px rgba(34, 158, 217, 0.4);
+      transition: all 0.2s;
+      margin-top: 1.25rem;
+    }
+    .btn-telegram:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(34, 158, 217, 0.6);
+    }
+    .section-title {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--gold-light);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3.5rem;
+    }
+    .gallery-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 1rem;
+      overflow: hidden;
+      padding: 1rem;
+      text-align: center;
+      transition: transform 0.2s;
+    }
+    .gallery-card:hover { transform: translateY(-4px); }
+    .gallery-card img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.6rem;
+      margin-bottom: 0.75rem;
+    }
+    .gallery-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">✨ ۱۰۰٪ سرورلس روی Cloudflare Workers با فناوری WebAssembly</div>
+      <h1>خوشنـویسی و خطاطـی نستـعلیق</h1>
+      <p class="subtitle">تبدیل لحظه‌ای متن فارسی به شاهکار خطاطی نستعلیق با موتور HarfBuzz و شبیه‌سازی اتصالات سنتی خوشنویسی</p>
+    </header>
+
+    <!-- Interactive Live Demo -->
+    <div class="grid">
+      <div class="card">
+        <h2 style="font-size:1.3rem; margin-bottom:1rem; color:var(--gold-light);">🖋️ کارگاه خطاطی زنده</h2>
+        <div class="form-group">
+          <label for="textInput">متن دلخواه شما (فارسی / ابیات شعر):</label>
+          <textarea id="textInput" placeholder="متن خود را اینجا وارد کنید...">به نام خداوند جان و خرد
+کزین برتر اندیشه برنگذرد</textarea>
+          <div class="presets">
+            <span style="font-size:0.8rem; color:var(--text-muted); align-self:center;">نمونه‌ها:</span>
+            <button class="preset-btn" onclick="setPreset('سعدی')">سعدی</button>
+            <button class="preset-btn" onclick="setPreset('حافظ')">حافظ</button>
+            <button class="preset-btn" onclick="setPreset('مولانا')">مولانا</button>
+            <button class="preset-btn" onclick="setPreset('خیام')">خیام</button>
+          </div>
+        </div>
+
+        <div class="row form-group">
+          <div style="flex:1;">
+            <label for="fontSelect">فونت خطاطی:</label>
+            <select id="fontSelect">
+              <option value="iran-nastaliq" selected>ایران نستعلیق (اصیل)</option>
+              <option value="noto-nastaliq">نستعلیق نوستو (اردو/فارسی)</option>
+            </select>
+          </div>
+          <div style="flex:1;">
+            <label for="themeSelect">تم رنگی:</label>
+            <select id="themeSelect">
+              <option value="gold" selected>زرین و طلا (Gold)</option>
+              <option value="classic">کلاسیک (کاغذ سنتی)</option>
+              <option value="night">شب نیلی (Night Dark)</option>
+              <option value="rose">گل سرخ (Rose)</option>
+              <option value="emerald">زمردین (Emerald)</option>
+              <option value="azure">لاجورد (Azure)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="sizeRange">اندازه قلم: <span id="sizeVal">56</span>px</label>
+          <input type="range" id="sizeRange" min="36" max="90" value="56" oninput="document.getElementById('sizeVal').innerText = this.value">
+        </div>
+
+        <button class="btn-submit" onclick="generate()">🖌️ رندر و خطاطی نستعلیق</button>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:1.3rem; margin-bottom:1rem; color:var(--gold-light);">🖼️ پیش‌نمایش تصویر خروجی</h2>
+        <div class="preview-box">
+          <div id="spinner" class="spinner"></div>
+          <img id="previewImg" class="preview-img" alt="Nastaliq Render" src="images/ferdowsi-classic.png">
+        </div>
+        <div class="actions">
+          <button class="btn-action" onclick="downloadImage()">💾 دریافت تصویر (PNG)</button>
+          <button class="btn-action" onclick="shareTelegram()">🚀 اشتراک در تلگرام</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Telegram Bot Call to Action -->
+    <div class="telegram-banner">
+      <h2 style="font-size:1.8rem; margin-bottom:0.75rem; color:white;">ربات تلگرام @IRnastaliqbot فعال و آنلاین است!</h2>
+      <p style="color:rgba(255,255,255,0.85); max-width:650px; margin:0 auto;">
+        بدون هیچ زحمتی، در تلگرام به آیدی <strong>@IRnastaliqbot</strong> پیام دهید تا همان لحظه قطعه خطاطی شده را با بالاترین کیفیت تحویل بگیرید.
+      </p>
+      <a href="https://t.me/IRnastaliqbot" target="_blank" class="btn-telegram">
+        <span>💬 ورود به ربات @IRnastaliqbot</span>
+      </a>
+    </div>
+
+    <!-- Gallery of Renders -->
+    <h2 class="section-title">گالری نمونه‌های رندر شده با تم‌های متنوع</h2>
+    <div class="gallery">
+      <div class="gallery-card">
+        <img src="images/hafez-gold.png" alt="حافظ - تم طلا">
+        <div class="gallery-desc"><strong>حافظ شیرازی</strong> — تم طلا و زر (Gold)</div>
+      </div>
+      <div class="gallery-card">
+        <img src="images/ferdowsi-classic.png" alt="فردوسی - تم کلاسیک">
+        <div class="gallery-desc"><strong>شاهنامه فردوسی</strong> — تم کلاسیک و کاغذ کاهی</div>
+      </div>
+      <div class="gallery-card">
+        <img src="images/saadi-night.png" alt="سعدی - تم شب نیلی">
+        <div class="gallery-desc"><strong>سعدی شیرازی</strong> — تم شب نیلی (Night)</div>
+      </div>
+      <div class="gallery-card">
+        <img src="images/molana-rose.png" alt="مولانا - تم گل سرخ">
+        <div class="gallery-desc"><strong>مولانای بلخی</strong> — تم گل سرخ (Rose)</div>
+      </div>
+      <div class="gallery-card">
+        <img src="images/khayyam-emerald.png" alt="خیام - تم زمردین">
+        <div class="gallery-desc"><strong>حکیم عمر خیام</strong> — تم زمردین (Emerald)</div>
+      </div>
+    </div>
+
+    <footer>
+      <p>طراحی و توسعه یافته توسط <strong>startStar</strong> | دامنه رسمی: <strong>nastaliq.startstar.ir</strong></p>
+      <p style="margin-top:0.4rem; font-size:0.8rem; color:#64748b;">Cloudflare Workers + HarfBuzz WebAssembly + Resvg | Telegram: @IRnastaliqbot</p>
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE = 'https://nastaliq-bot.a77aslani.workers.dev';
+
+    const presets = {
+      'سعدی': 'تن آدمی شریف است به جان آدمیت\\nنه همین لباس زیباست نشان آدمیت',
+      'حافظ': 'در ازل پرتو حسنت ز تجلی دم زد\\nعشق پیدا شد و آتش به همه عالم زد',
+      'مولانا': 'بشنو این نی چون شکایت می‌کند\\nاز جدایی‌ها حکایت می‌کند',
+      'خیام': 'ابر آمد و زار بر سر سبزه گریست\\nبی باده گلرنگ نمی‌شاید زیست'
+    };
+
+    function setPreset(name) {
+      if (presets[name]) {
+        document.getElementById('textInput').value = presets[name];
+        generate();
+      }
+    }
+
+    let currentBlobUrl = null;
+
+    async function generate() {
+      const text = document.getElementById('textInput').value.trim();
+      if (!text) return;
+      const font = document.getElementById('fontSelect').value;
+      const theme = document.getElementById('themeSelect').value;
+      const size = document.getElementById('sizeRange').value;
+
+      const previewImg = document.getElementById('previewImg');
+      const spinner = document.getElementById('spinner');
+
+      previewImg.style.opacity = '0.3';
+      spinner.style.display = 'block';
+
+      try {
+        const resp = await fetch(API_BASE + '/api/render', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, font, theme, fontSize: parseInt(size) })
+        });
+        if (!resp.ok) throw new Error(await resp.text());
+        const blob = await resp.blob();
+        if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = URL.createObjectURL(blob);
+        previewImg.src = currentBlobUrl;
+      } catch (err) {
+        alert('خطا در رندر: ' + err.message);
+      } finally {
+        previewImg.style.opacity = '1';
+        spinner.style.display = 'none';
+      }
+    }
+
+    function downloadImage() {
+      const img = document.getElementById('previewImg');
+      const a = document.createElement('a');
+      a.href = img.src;
+      a.download = 'nastaliq-calligraphy.png';
+      a.click();
+    }
+
+    function shareTelegram() {
+      const text = document.getElementById('textInput').value.trim();
+      const url = 'https://t.me/IRnastaliqbot?start=' + encodeURIComponent(text);
+      window.open(url, '_blank');
+    }
+  </script>
+</body>
+</html>
