@@ -27,7 +27,12 @@ export const THEMES = {
 
 export const FONTS = {
   "iran-nastaliq": { name: "ایران نستعلیق", key: "font:iran-nastaliq" },
-  "noto-nastaliq": { name: "نستعلیق نوستو", key: "font:noto-nastaliq" }
+  "shekasteh": { name: "شکسته نستعلیق", key: "font:shekasteh" },
+  "dima-shekasteh": { name: "دیما شکسته", key: "font:dima-shekasteh" },
+  "thuluth": { name: "خط ثلث اسلامی", key: "font:thuluth" },
+  "kufi": { name: "خط کوفی سنتی", key: "font:kufi" },
+  "mashgh": { name: "خط مشق خوشنویسی", key: "font:mashgh" },
+  "noto-nastaliq": { name: "نوتو نستعلیق اردو", key: "font:noto-nastaliq" }
 };
 
 export async function getFont(env, fontKey = "iran-nastaliq") {
@@ -87,7 +92,6 @@ function shapeSegment(hb, font, otFont, text, fontSize, upem) {
     glyphs.push({ gid, gx, gy });
     cursorX += pos.xAdvance * scale;
   }
-  
 
   if (minX === Infinity) {
     minX = 0; maxX = cursorX; minY = 0; maxY = fontSize;
@@ -105,6 +109,42 @@ function shapeSegment(hb, font, otFont, text, fontSize, upem) {
   };
 }
 
+function calculateCanvasSize(naturalW, naturalH, ratio) {
+  let finalW = naturalW;
+  let finalH = naturalH;
+
+  const r = (ratio || "auto").toLowerCase().trim();
+
+  if (r === "square" || r === "1:1" || r === "profile" || r === "post") {
+    const s = Math.max(naturalW, naturalH);
+    finalW = s;
+    finalH = s;
+  } else if (r === "story" || r === "vertical" || r === "9:16") {
+    const target = 9 / 16;
+    if (naturalW / naturalH > target) {
+      finalW = naturalW;
+      finalH = Math.ceil(naturalW / target);
+    } else {
+      finalH = naturalH;
+      finalW = Math.ceil(naturalH * target);
+    }
+  } else if (r === "horizontal" || r === "banner" || r === "16:9") {
+    const target = 16 / 9;
+    if (naturalW / naturalH < target) {
+      finalH = naturalH;
+      finalW = Math.ceil(naturalH * target);
+    } else {
+      finalW = naturalW;
+      finalH = Math.ceil(naturalW / target);
+    }
+  }
+
+  const offsetX = Math.round((finalW - naturalW) / 2);
+  const offsetY = Math.round((finalH - naturalH) / 2);
+
+  return { finalW, finalH, offsetX, offsetY };
+}
+
 export async function renderNastaliq(env, rawText, options = {}) {
   await initEngines();
   const {
@@ -112,7 +152,8 @@ export async function renderNastaliq(env, rawText, options = {}) {
     theme = "classic",
     fontSize = 54,
     padding = 60,
-    transparent = false
+    transparent = false,
+    ratio = "auto"
   } = options;
 
   const { fontBuffer, otFont } = await getFont(env, fontKey);
@@ -162,10 +203,6 @@ export async function renderNastaliq(env, rawText, options = {}) {
     minDescent = Math.min(minDescent, h.minY);
     items.push({ type: "single", h });
   }
-
-  
-  
-  
 
   const centerGap = isPoetry ? Math.max(80, fontSize * 1.6) : 0;
   const contentWidth = isPoetry
@@ -228,16 +265,18 @@ export async function renderNastaliq(env, rawText, options = {}) {
     }
   }
 
-  const width = Math.ceil(contentWidth + padding * 2);
-  const height = Math.ceil(currentY - lineSpacing + maxAscent - minDescent + padding * 2);
+  const naturalWidth = Math.ceil(contentWidth + padding * 2);
+  const naturalHeight = Math.ceil(currentY - lineSpacing + maxAscent - minDescent + padding * 2);
+
+  const { finalW, finalH, offsetX, offsetY } = calculateCanvasSize(naturalWidth, naturalHeight, ratio);
 
   const bgElement = isTransparent
     ? ""
     : `<rect width="100%" height="100%" fill="${selectedTheme.bg}" rx="16" stroke="${selectedTheme.border}" stroke-width="2"/>`;
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${finalW}" height="${finalH}" viewBox="0 0 ${finalW} ${finalH}">
   ${bgElement}
-  <g>
+  <g transform="translate(${offsetX}, ${offsetY})">
     ${svgPaths.join("\n    ")}
   </g>
 </svg>`;
@@ -248,10 +287,11 @@ export async function renderNastaliq(env, rawText, options = {}) {
   return {
     svg,
     pngBuffer,
-    width,
-    height,
+    width: finalW,
+    height: finalH,
     isPoetry,
     isTransparent,
+    ratio: ratio || "auto",
     theme: selectedTheme
   };
 }

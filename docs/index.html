@@ -3,52 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>خوشنویسی و خطاطی نستعلیق آنلاین | ربات تلگرام @IRnastaliqbot</title>
+  <title>خوشنویسی و خطاطی سنتی آنلاین | ربات تلگرام @IRnastaliqbot</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;800&display=swap" rel="stylesheet">
   <style>
-    @font-face {
-      font-family: 'IranNastaliq';
-      src: url('fonts/IranNastaliq.ttf') format('truetype');
-      font-display: swap;
-    }
     :root {
-      --bg: #0b0f19;
-      --card-bg: #151d30;
-      --card-border: #233152;
+      --bg: #070a13;
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.1);
       --gold: #d4af37;
-      --gold-light: #f3e5ab;
+      --gold-light: #f5e7a1;
       --text: #f1f5f9;
       --text-muted: #94a3b8;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Vazirmatn', sans-serif;
-      background: radial-gradient(circle at 50% 0%, #1e2942 0%, var(--bg) 80%);
+      font-family: 'Vazirmatn', system-ui, sans-serif;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(at 0% 0%, rgba(212, 175, 55, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(30, 58, 138, 0.2) 0px, transparent 50%);
       color: var(--text);
       min-height: 100vh;
-      padding: 2.5rem 1rem;
+      padding: 2rem 1rem;
       line-height: 1.6;
     }
     .container { max-width: 1080px; margin: 0 auto; }
     header { text-align: center; margin-bottom: 2.5rem; }
     .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
+      display: inline-block;
       background: rgba(212, 175, 55, 0.15);
-      border: 1px solid rgba(212, 175, 55, 0.35);
       color: var(--gold-light);
-      padding: 0.4rem 1.25rem;
-      border-radius: 999px;
-      font-size: 0.9rem;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
       margin-bottom: 1rem;
     }
     h1 {
-      font-size: 2.8rem;
+      font-size: 2.6rem;
       font-weight: 800;
-      background: linear-gradient(135deg, #fff 0%, var(--gold-light) 60%, var(--gold) 100%);
+      background: linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 0.75rem;
@@ -56,7 +53,7 @@
     .subtitle {
       color: var(--text-muted);
       font-size: 1.15rem;
-      max-width: 760px;
+      max-width: 780px;
       margin: 0 auto;
     }
     .grid {
@@ -71,14 +68,16 @@
       border: 1px solid var(--card-border);
       border-radius: 1.25rem;
       padding: 1.75rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
     .form-group { margin-bottom: 1.25rem; }
     label {
       display: block;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
       font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--gold-light);
+      margin-bottom: 0.5rem;
     }
     textarea {
       width: 100%;
@@ -165,7 +164,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 320px;
+      min-height: 340px;
       background: #090d16;
       border: 1px dashed var(--card-border);
       border-radius: 1rem;
@@ -178,47 +177,45 @@
       height: auto;
       border-radius: 0.75rem;
       box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-      transition: opacity 0.3s;
+      transition: opacity 0.2s;
     }
     .spinner {
-      display: none;
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(212,175,55,0.2);
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(212, 175, 55, 0.2);
       border-top-color: var(--gold);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
+      display: none;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .actions {
       display: flex;
-      gap: 1rem;
-      margin-top: 1.25rem;
-      width: 100%;
+      gap: 0.75rem;
+      margin-top: 1rem;
     }
     .btn-action {
       flex: 1;
-      text-align: center;
-      text-decoration: none;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.06);
       border: 1px solid var(--card-border);
       color: var(--text);
-      padding: 0.75rem;
-      border-radius: 0.75rem;
-      font-weight: 600;
-      font-size: 0.95rem;
+      padding: 0.65rem;
+      border-radius: 0.6rem;
       cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
       transition: all 0.2s;
     }
     .btn-action:hover {
-      background: rgba(255,255,255,0.15);
-      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.12);
+      border-color: var(--gold);
     }
     .telegram-banner {
-      background: linear-gradient(135deg, rgba(34, 158, 217, 0.15) 0%, rgba(15, 23, 42, 0.8) 100%);
+      background: linear-gradient(135deg, rgba(34, 158, 217, 0.2) 0%, rgba(15, 23, 42, 0.6) 100%);
       border: 1px solid rgba(34, 158, 217, 0.4);
       border-radius: 1.25rem;
-      padding: 2.25rem 1.5rem;
+      padding: 2rem;
       text-align: center;
       margin-bottom: 3.5rem;
     }
@@ -230,12 +227,10 @@
       color: white;
       text-decoration: none;
       font-weight: 700;
-      font-size: 1.15rem;
-      padding: 0.9rem 2.2rem;
-      border-radius: 999px;
-      box-shadow: 0 6px 25px rgba(34, 158, 217, 0.4);
-      transition: all 0.2s;
+      padding: 0.85rem 2rem;
+      border-radius: 9999px;
       margin-top: 1.25rem;
+      transition: transform 0.15s, box-shadow 0.2s;
     }
     .btn-telegram:hover {
       transform: translateY(-2px);
@@ -243,7 +238,7 @@
     }
     .features {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 1.5rem;
       margin-bottom: 3.5rem;
     }
@@ -259,27 +254,26 @@
       text-align: center;
       color: var(--text-muted);
       font-size: 0.9rem;
-      border-top: 1px solid rgba(255,255,255,0.08);
       padding-top: 2rem;
+      border-top: 1px solid var(--card-border);
     }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <div class="badge">✨ ۱۰۰٪ سرورلس روی Cloudflare Workers با فناوری WebAssembly</div>
-      <h1>خوشنـویسی و خطاطـی نستـعلیق</h1>
-      <p class="subtitle">تبدیل هوشمند متن و اشعار فارسی با تفکیک خودکار مصرع‌ها و ابیات (با علامت /) و رندر برداری در لحظه</p>
+      <div class="badge">✨ ۱۰۰٪ رندر مستقیم برداری بدون هوش مصنوعی (فناوری HarfBuzz WebAssembly)</div>
+      <h1>خوشنـویسی و خطاطـی سنتی ایران</h1>
+      <p class="subtitle">تبدیل لحظه‌ای اشعار و متون به انواع خطوط سنتی (نستعلیق، شکسته، ثلث، کوفی) با تفکیک ابیات و کادربندی مربعی</p>
     </header>
 
     <div class="grid">
       <div class="card">
-        <h2 style="font-size:1.3rem; margin-bottom:0.75rem; color:var(--gold-light);">🖋️ کارگاه نگارش شعر و متن</h2>
         <div class="form-group">
-          <label for="textInput">متن یا ابیات شعر دلخواه:</label>
+          <label for="textInput">متن یا شعر دلخواه:</label>
           <textarea id="textInput" placeholder="متن یا شعر را بنویسید...">به نام خداوند جان و خرد / کزین برتر اندیشه برنگذرد
 خداوند نام و خداوند جای / خداوند روزی ده رهنمای</textarea>
-          <span class="hint">💡 نکته شاعران: بین دو مصرع اسلش (/) بگذارید تا خودکار در دو ستون متوازن چیدمان شود.</span>
+          <span class="hint">💡 نکته شاعران: بین دو مصرع علامت اسلش (/) بگذارید تا خودکار در دو ستون متوازن چیدمان شود.</span>
           <div class="presets">
             <span style="font-size:0.8rem; color:var(--text-muted); align-self:center;">اشعار نمونه:</span>
             <button class="preset-btn" onclick="setPreset('فردوسی')">فردوسی</button>
@@ -289,14 +283,20 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label for="fontSelect">خط و قلم خوشنویسی:</label>
+          <select id="fontSelect">
+            <option value="iran-nastaliq" selected>ایران نستعلیق (پیش‌فرض اصیل)</option>
+            <option value="shekasteh">شکسته نستعلیق (سنتی)</option>
+            <option value="dima-shekasteh">دیما شکسته نستعلیق</option>
+            <option value="thuluth">خط ثلث اسلامی</option>
+            <option value="kufi">خط کوفی سنتی</option>
+            <option value="mashgh">خط مشق خوشنویسی</option>
+            <option value="noto-nastaliq">نستعلیق نوتو اردو</option>
+          </select>
+        </div>
+
         <div class="row form-group">
-          <div style="flex:1;">
-            <label for="fontSelect">فونت خطاطی:</label>
-            <select id="fontSelect">
-              <option value="iran-nastaliq" selected>ایران نستعلیق (اصیل)</option>
-              <option value="noto-nastaliq">نستعلیق نوستو (اردو/فارسی)</option>
-            </select>
-          </div>
           <div style="flex:1;">
             <label for="themeSelect">تم رنگی:</label>
             <select id="themeSelect">
@@ -306,6 +306,15 @@
               <option value="rose">گل سرخ (Rose)</option>
               <option value="emerald">زمردین (Emerald)</option>
               <option value="azure">لاجورد (Azure)</option>
+            </select>
+          </div>
+          <div style="flex:1;">
+            <label for="ratioSelect">📐 نسبت کادر:</label>
+            <select id="ratioSelect">
+              <option value="auto" selected>خودکار (فیت متن)</option>
+              <option value="square">مربعی ۱:۱ (پست و پروفایل)</option>
+              <option value="story">عمودی ۹:۱۶ (استوری)</option>
+              <option value="horizontal">افقی ۱۶:۹ (کاور و بنر)</option>
             </select>
           </div>
         </div>
@@ -339,7 +348,7 @@
     <div class="telegram-banner">
       <h2 style="font-size:1.8rem; margin-bottom:0.75rem; color:white;">ربات تلگرام @IRnastaliqbot فعال و آنلاین است!</h2>
       <p style="color:rgba(255,255,255,0.85); max-width:650px; margin:0 auto;">
-        در تلگرام هر بیتی را با علامت اسلش (/) بفرستید تا فوراً قطعه خطاطی‌شده با چیدمان شعر سنتی و کیفیت بالا برای شما ارسال شود.
+        در تلگرام با دستورات سریع یا ارسال شعر با علامت اسلش (/) خروجی خطاطی را با کادربندی مربعی، استوری یا استیکر دریافت کنید.
       </p>
       <a href="https://t.me/IRnastaliqbot" target="_blank" class="btn-telegram">
         <span>💬 ورود به ربات @IRnastaliqbot</span>
@@ -348,24 +357,31 @@
 
     <div class="features">
       <div class="feat-card">
+        <div class="feat-icon">📐</div>
+        <div class="feat-title">نسبت کادر مربعی و استوری</div>
+        <p style="color:var(--text-muted); font-size:0.95rem;">
+          امکان تولید در ابعاد مربعی ۱:۱ (عکس پروفایل و پست اینستاگرام)، عمودی ۹:۱۶ (استوری) یا کادر فیت متن با دستور /ratio_square در تلگرام.
+        </p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🖋️</div>
+        <div class="feat-title">خطوط سنتی اصیل</div>
+        <p style="color:var(--text-muted); font-size:0.95rem;">
+          پشتیبانی از خطوط نستعلیق ایرانی، شکسته نستعلیق، خط ثلث اسلامی، خط کوفی و مشق با کیفیت هندسی بالا.
+        </p>
+      </div>
+      <div class="feat-card">
         <div class="feat-icon">📜</div>
         <div class="feat-title">قالب‌بندی هوشمند شعر با اسلش</div>
         <p style="color:var(--text-muted); font-size:0.95rem;">
-          با قرار دادن علامت / بین مصرع‌ها، مصرع اول و دوم به صورت خودکار روبه‌روی هم قرار گرفته و بین هر بیت فاصله جداگانه می‌افتد.
+          با قرار دادن علامت / بین مصرع‌ها، مصرع اول و دوم روبه‌روی هم قرار گرفته و بین هر بیت فاصله جداگانه می‌افتد.
         </p>
       </div>
       <div class="feat-card">
-        <div class="feat-icon">✨</div>
-        <div class="feat-title">حالت استیکر (بدون پس‌زمینه)</div>
+        <div class="feat-icon">🚫🤖</div>
+        <div class="feat-title">۱۰۰٪ برداری و بدون هوش مصنوعی</div>
         <p style="color:var(--text-muted); font-size:0.95rem;">
-          امکان تولید خروجی با پس‌زمینه کاملاً شفاف با دستور /sticker در تلگرام یا دکمه استیکر در سایت جهت درج روی تصاویر و استوری.
-        </p>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">⚡</div>
-        <div class="feat-title">اجرای ۱۰۰٪ لبه‌ای در کلودفلر</div>
-        <p style="color:var(--text-muted); font-size:0.95rem;">
-          بدون وابستگی به هیچ سرور اختصاصی؛ موتور ترکیبی HarfBuzz WebAssembly و Resvg در کمتر از ۵۰ میلی‌ثانیه تصویر نهایی را می‌سازد.
+          تمام حروف مستقیماً از منحنی‌های برداری فونت TrueType با موتور HarfBuzz استخراج می‌شوند و هیچ هوش مصنوعی یا تغییر فرم تصادفی وجود ندارد.
         </p>
       </div>
     </div>
@@ -378,10 +394,10 @@
 
   <script>
     const presets = {
-      'فردوسی': 'به نام خداوند جان و خرد / کزین برتر اندیشه برنگذرد\\nخداوند نام و خداوند جای / خداوند روزی ده رهنمای',
-      'سعدی': 'تن آدمی شریف است به جان آدمیت / نه همین لباس زیباست نشان آدمیت\\nاگر آدمی به چشم است و دهان و گوش و بینی / چه میان نقش دیوار و میان آدمیت',
-      'حافظ': 'در ازل پرتو حسنت ز تجلی دم زد / عشق پیدا شد و آتش به همه عالم زد\\nجلوه‌ای کرد رخت دید ملک عشق نداشت / عین آتش شد از این غیرت و بر آدم زد',
-      'خیام': 'ابر آمد و زار بر سر سبزه گریست / بی باده گلرنگ نمی‌شاید زیست\\nاین سبزه که امروز تماشاگه ماست / تا سبزه خاک ما تماشاگه کیست'
+      'فردوسی': 'به نام خداوند جان و خرد / کزین برتر اندیشه برنگذرد\nخداوند نام و خداوند جای / خداوند روزی ده رهنمای',
+      'سعدی': 'تن آدمی شریف است به جان آدمیت / نه همین لباس زیباست نشان آدمیت\nاگر آدمی به چشم است و دهان و گوش و بینی / چه میان نقش دیوار و میان آدمیت',
+      'حافظ': 'در ازل پرتو حسنت ز تجلی دم زد / عشق پیدا شد و آتش به همه عالم زد\nجلوه‌ای کرد رخت دید ملک عشق نداشت / عین آتش شد از این غیرت و بر آدم زد',
+      'خیام': 'ابر آمد و زار بر سر سبزه گریست / بی باده گلرنگ نمی‌شاید زیست\nاین سبزه که امروز تماشاگه ماست / تا سبزه خاک ما تماشاگه کیست'
     };
 
     function setPreset(name) {
@@ -399,6 +415,7 @@
       const font = document.getElementById('fontSelect').value;
       const theme = document.getElementById('themeSelect').value;
       const size = document.getElementById('sizeRange').value;
+      const ratio = document.getElementById('ratioSelect').value;
       const transparent = document.getElementById('transparentCheck').checked;
 
       const previewImg = document.getElementById('previewImg');
@@ -407,25 +424,68 @@
       previewImg.style.opacity = '0.3';
       spinner.style.display = 'block';
 
+      const API_HOST = 'https://nastaliq-bot.a77aslani.workers.dev';
+
       try {
-        const resp = await fetch('https://nastaliq-bot.a77aslani.workers.dev/api/render', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        let resp;
+        try {
+          resp = await fetch(API_HOST + '/api/render', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text,
+              font,
+              theme,
+              fontSize: parseInt(size),
+              transparent,
+              ratio
+            })
+          });
+        } catch (postErr) {
+          console.warn('POST failed, attempting GET fallback...', postErr);
+          const params = new URLSearchParams({
             text,
             font,
             theme,
-            fontSize: parseInt(size),
-            transparent
-          })
-        });
-        if (!resp.ok) throw new Error(await resp.text());
+            size,
+            ratio,
+            transparent: transparent ? 'true' : 'false'
+          });
+          resp = await fetch(API_HOST + '/api/render?' + params.toString());
+        }
+
+        if (!resp || !resp.ok) {
+          const errText = resp ? await resp.text() : 'No response from server';
+          throw new Error(errText);
+        }
+
         const blob = await resp.blob();
         if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
         currentBlobUrl = URL.createObjectURL(blob);
         previewImg.src = currentBlobUrl;
       } catch (err) {
-        alert('خطا در رندر: ' + err.message);
+        console.error('Render error:', err);
+        // Direct image src fallback as last resort (works even if CORS/adblock blocks JS fetch)
+        const params = new URLSearchParams({
+          text,
+          font,
+          theme,
+          size,
+          ratio,
+          transparent: transparent ? 'true' : 'false',
+          _t: Date.now()
+        });
+        previewImg.src = API_HOST + '/api/render?' + params.toString();
+        previewImg.onload = () => {
+          previewImg.style.opacity = '1';
+          spinner.style.display = 'none';
+        };
+        previewImg.onerror = () => {
+          alert('خطا در برقراری ارتباط با موتور خطاطی. لطفاً اتصال اینترنت خود را بررسی نمایید.');
+          previewImg.style.opacity = '1';
+          spinner.style.display = 'none';
+        };
+        return;
       } finally {
         previewImg.style.opacity = '1';
         spinner.style.display = 'none';
@@ -436,7 +496,7 @@
       const img = document.getElementById('previewImg');
       const a = document.createElement('a');
       a.href = img.src;
-      a.download = 'nastaliq-calligraphy.png';
+      a.download = 'calligraphy.png';
       a.click();
     }
 
