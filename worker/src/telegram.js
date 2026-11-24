@@ -228,6 +228,7 @@ async function deliverRender(botToken, env, chatId, state, options = {}) {
     transparent: state.sticker === true || state.theme === "sticker" || state.theme === "transparent",
     ratio: state.ratio || "auto",
     justify: state.justify === true,
+    signature: state.signature || "",
     fgColor: state.fgColor || null,
     bgColor: state.bgColor || null,
     bgImageBase64: state.bgImageBase64 || null,
@@ -294,6 +295,7 @@ async function addToUserStickerPack(botToken, env, chatId, userId, state) {
     transparent: true,
     ratio: "auto",
     justify: state.justify === true,
+    signature: state.signature || "",
     maxSide: 512
   });
 

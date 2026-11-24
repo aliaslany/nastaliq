@@ -726,6 +726,16 @@
             if (st.theme) document.getElementById('themeSelect').value = st.theme;
             if (st.ratio) document.getElementById('ratioSelect').value = st.ratio;
             if (st.signature) document.getElementById('signatureInput').value = st.signature;
+            if (st.fontSize) {
+              document.getElementById('sizeRange').value = st.fontSize;
+              document.getElementById('sizeVal').innerText = st.fontSize;
+            }
+            if (st.fgColor || st.bgColor) {
+              document.getElementById('customColorCheck').checked = true;
+              document.getElementById('colorRow').classList.add('open');
+              if (st.fgColor) document.getElementById('fgColorInput').value = st.fgColor;
+              if (st.bgColor) document.getElementById('bgColorInput').value = st.bgColor;
+            }
             if (st.justify) document.getElementById('justifyCheck').checked = true;
             if (st.sticker) document.getElementById('transparentCheck').checked = true;
             generate();
@@ -741,6 +751,13 @@
         if (params.get('font')) document.getElementById('fontSelect').value = params.get('font');
         if (params.get('theme')) document.getElementById('themeSelect').value = params.get('theme');
         if (params.get('ratio')) document.getElementById('ratioSelect').value = params.get('ratio');
+        if (params.get('signature')) document.getElementById('signatureInput').value = params.get('signature');
+        if (params.get('size')) {
+          document.getElementById('sizeRange').value = params.get('size');
+          document.getElementById('sizeVal').innerText = params.get('size');
+        }
+        if (params.get('justify') === 'true') document.getElementById('justifyCheck').checked = true;
+        if (params.get('transparent') === 'true') document.getElementById('transparentCheck').checked = true;
         generate();
       }
     }

@@ -358,11 +358,12 @@ export async function renderNastaliq(env, rawInputText, options = {}) {
   const naturalWidth = Math.ceil(Math.max(contentWidth, sigSeg ? sigSeg.width + 20 : 0) + padding * 2);
   const naturalHeight = Math.ceil(Math.max(0, currentY - lineSpacing) + maxAscent - minDescent + sigExtraHeight + padding * 2);
 
+  const effectiveBgAspect = !isTransparent && bgImageBase64 ? bgImageAspect : null;
   const { finalW, finalH, offsetX, offsetY, normalizedRatio } = calculateCanvasSize(
     naturalWidth,
     naturalHeight,
     ratio,
-    bgImageAspect
+    effectiveBgAspect
   );
 
   const visuals = buildThemeVisuals(selectedTheme, finalW, finalH, {
@@ -370,7 +371,7 @@ export async function renderNastaliq(env, rawInputText, options = {}) {
     fgColor,
     bgColor,
     frameOverride: frame,
-    bgImageBase64,
+    bgImageBase64: isTransparent ? null : bgImageBase64,
     bgImageMime
   });
 

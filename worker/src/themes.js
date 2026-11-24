@@ -182,7 +182,7 @@ export function buildThemeVisuals(themeObj, width, height, opts = {}) {
 
   let bgSvg = "";
 
-  if (bgImageBase64) {
+  if (!isTransparent && bgImageBase64) {
     const safeMime = bgImageMime === "image/png" ? "image/png" : "image/jpeg";
     // Overlay calligraphy directly onto user-supplied photo with subtle legibility scrim
     bgSvg = `
