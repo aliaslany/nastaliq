@@ -43,31 +43,33 @@ A modern, 100% serverless Telegram bot and web platform that renders Persian tex
          └─ 5. ارسال بلادرنگ عکس با متد sendPhoto تلگرام (< 1 ثانیه)
 ```
 
-### امکانات
+### امکانات جدید نسخه ۲
 
-- ⚡ **سرعت فوق‌العاده:** تولید تصویر خطاطی زیر ۵۰ میلی‌ثانیه بدون هیچ صف یا تأخیر
-- 🖋️ **اتصالات اصیل نستعلیق:** شبیه‌سازی کرسی‌ها و کشیده‌های واقعی با موتور حرفه‌ای HarfBuzz
-- 🎨 **تم‌های رنگی چشم‌نواز:**
-  - `gold`: طلا و زر روی پس‌زمینه مخملی تیره
-  - `classic`: مرکب مشکی روی کاغذ کاهی کهن
-  - `night`: شب نیلی و مهتابی
-  - `rose`: گل سرخ درباری
-  - `emerald`: زمردین فاخر
-  - `azure`: لاجورد سلطنتی
-- 💾 **ذخیره ترجیحات در Cloudflare KV:** امکان تنظیم فونت و تم دلخواه برای هر چت
-- 🌐 **وب‌اپلیکیشن دمو و API:** صفحه تحت وب با رابط کاربری فارسی و کارگاه نگارش زنده در `https://nastaliq.startstar.ir`
+- 🚫🤖 **۱۰۰٪ فونت‌محور و بدون هوش مصنوعی:** تمام اشکال حروف دقیقاً از جداول فونت TrueType و شکل‌دهی HarfBuzz WASM استخراج می‌شوند.
+- 🖋️ **۱۰ خط اصیل خوشنویسی:** `iran-nastaliq`، `shekasteh` (شکسته نستعلیق)، `dima-shekasteh`، `thuluth` (ثلث)، `naskh` (نسخ)، `kufi` (کوفی)، `mashgh` (مشق)، `davat` (دوات)، `termeh` (ترمه) و `noto-nastaliq`.
+- 📜 **قالب‌بندی هوشمند شعر + کشیدگی (Kashida):** تفکیک خودکار دو ستونی ابیات با علامت `/`، درج نام شاعر در خط آخر با `-- نام شاعر` و تراز کشیده (`justify=true`).
+- 🎨 **تم‌های ورق طلا و تذهیب:** `gold-leaf` (طلای متالیک + قاب تذهیب)، `tazhib` (تذهیب لاجورد و زر)، `gold`، `classic`، `night`، `rose`، `emerald`، `azure`، `sticker` و انتخاب رنگ دلخواه (`fgColor` / `bgColor`).
+- 📐 **سایزهای Full-HD و خروجی وکتور SVG:** کادر مربعی `1080×1080` (پست اینستاگرام و پروفایل)، استوری `1080×1920`، بنر `1920×1080` و خروجی لایه‌باز `format=svg`.
+- 🎛️ **تعامل زنده و استیکر پک در تلگرام:**
+  - دکمه‌های شیشه‌ای زیر هر تصویر جهت تغییر لحظه‌ای فونت، تم، کادر، کشیدگی و دریافت وکتور SVG
+  - افزودن مستقیم به **پک استیکر شخصی تلگرام** کاربر
+  - خوشنویسی مستقیم روی عکس دلخواه (ارسال عکس با متن در کپشن)
+  - استودیوی وب و مینی‌اپ تلگرام در `https://nastaliq.startstar.ir`
 
 ### دستورات ربات تلگرام (`@IRnastaliqbot`)
 
 | دستور | عملکرد |
 |---|---|
-| `/start` یا `/help` | راهنمای کامل استفاده و ارسال یک قطعه خطاطی خوش‌آمدگویی |
-| `/fonts` | مشاهده فهرست فونت‌های نستعلیق موجود |
-| `/themes` | مشاهده فهرست تم‌های رنگی |
-| `/font iran` یا `/font noto` | تغییر و ذخیره فونت پیش‌فرض کاربر |
-| `/theme <name>` | تغییر و ذخیره تم رنگی پیش‌فرض کاربر |
-| _(هر متن یا بیت شعر)_ | رندر فوری متن ارسالی به خط نستعلیق |
-| `font=noto theme=gold: متن` | اعمال تنظیمات دلخواه موقت فقط برای همین رندر |
+| `/start` یا `/help` | راهنمای کامل و لینک بازکردن استودیو مینی‌اپ |
+| `/fonts` و `/font_<name>` | فهرست و انتخاب فوری ۱۰ خط خوشنویسی |
+| `/themes` و `/theme_<name>` | انتخاب تم رنگی و طرح‌های تذهیب و ورق طلا |
+| `/ratios` و `/ratio_<name>` | انتخاب نسبت کادر (`auto`, `square`, `story`, `horizontal`) |
+| `/justify_on` و `/justify_off` | روشن/خاموش کردن تراز کشیده در ابیات شعر |
+| `/sticker` و `/photo` | سوئیچ بین استیکر شفاف بدون حاشیه و کارت تصویری |
+| `/svg` | دریافت فایل وکتور لایه‌باز SVG آخرین اثر |
+| `/settings` | مشاهده تمام تنظیمات فعال کاربر |
+| _(هر متن یا بیت شعر با `/`)_ | رندر فوری (خط آخر با `-- نام` به عنوان تخلص درج می‌شود) |
+| `font=shekasteh theme=gold-leaf ratio=square: متن` | رندر یک‌باره با تنظیمات دلخواه |
 
 ### نحوه استقرار (Deploy)
 
@@ -76,27 +78,20 @@ A modern, 100% serverless Telegram bot and web platform that renders Persian tex
    cd worker
    npm install
    ```
-۲. فایل `wrangler.toml` را با تنظیمات اکانت و کلید ربات تلگرام خود بررسی کنید:
-   ```toml
-   name = "nastaliq-bot"
-   main = "src/index.js"
-   compatibility_date = "2026-08-01"
-   compatibility_flags = ["nodejs_compat"]
-
-   [vars]
-   TELEGRAM_BOT_TOKEN = "your-bot-token"
-
-   [[kv_namespaces]]
-   binding = "PREFS"
-   id = "your-kv-namespace-id"
+۲. توکن‌ها را به صورت امن به عنوان Worker Secret ذخیره کنید:
+   ```bash
+   npx wrangler secret put TELEGRAM_BOT_TOKEN
+   npx wrangler secret put TELEGRAM_WEBHOOK_SECRET
    ```
-۳. فونت‌ها را در صورت نیاز داخل KV قرار دهید یا مستقیماً مستقر کنید:
+۳. فونت‌ها را داخل KV Namespace با شناسه `PREFS` بارگذاری و ورکر را مستقر کنید:
    ```bash
    npx wrangler deploy
    ```
-۴. وبهوک تلگرام را به ورکر متصل نمایید:
+۴. وبهوک تلگرام را همراه با `secret_token` به ورکر متصل نمایید:
    ```bash
-   curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://<your-worker>.workers.dev"
+   curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+     -d "url=https://<your-worker>.workers.dev" \
+     -d "secret_token=<YOUR_WEBHOOK_SECRET>"
    ```
 
 ---
