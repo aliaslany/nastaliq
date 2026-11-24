@@ -2,10 +2,16 @@ import resvgWasm from "./resvg.wasm";
 import * as hb from "./harfbuzz-index.js";
 import * as resvg from "@resvg/resvg-wasm";
 import opentype from "opentype.js";
+import { applyArabicPresentationForms, stretchWithKashida } from "./arabic-forms.js";
+import { FONTS, THEMES, buildThemeVisuals, resolveRatio } from "./themes.js";
+
+export { FONTS, THEMES };
 
 let resvgReady = false;
-let fontCache = new Map();
-let otFontCache = new Map();
+const fontCache = new Map();
+
+const MAX_TEXT_CHARS = 1200;
+const MAX_LINES = 24;
 
 export async function initEngines() {
   if (!resvgReady) {
@@ -14,64 +20,81 @@ export async function initEngines() {
   }
 }
 
-export const THEMES = {
-  classic: { name: "کلاسیک", text: "#111111", bg: "#fbf8ef", border: "#e5dec9" },
-  gold: { name: "طلا و زر", text: "#d4af37", bg: "#0f1115", border: "#2d2412" },
-  night: { name: "شب نیلی", text: "#e2e8f0", bg: "#0f172a", border: "#1e293b" },
-  rose: { name: "گل سرخ", text: "#881337", bg: "#fff1f2", border: "#fecdd3" },
-  emerald: { name: "زمردین", text: "#065f46", bg: "#ecfdf5", border: "#a7f3d0" },
-  azure: { name: "لاجورد", text: "#1e3a8a", bg: "#eff6ff", border: "#bfdbfe" },
-  sticker: { name: "استیکر شفاف", text: "#d4af37", bg: "transparent", border: "transparent" },
-  transparent: { name: "شفاف", text: "#111111", bg: "transparent", border: "transparent" }
-};
-
-export const FONTS = {
-  "iran-nastaliq": { name: "ایران نستعلیق", key: "font:iran-nastaliq" },
-  "shekasteh": { name: "شکسته نستعلیق", key: "font:shekasteh" },
-  "dima-shekasteh": { name: "دیما شکسته", key: "font:dima-shekasteh" },
-  "thuluth": { name: "خط ثلث اسلامی", key: "font:thuluth" },
-  "kufi": { name: "خط کوفی سنتی", key: "font:kufi" },
-  "mashgh": { name: "خط مشق خوشنویسی", key: "font:mashgh" },
-  "noto-nastaliq": { name: "نوتو نستعلیق اردو", key: "font:noto-nastaliq" }
-};
-
 export async function getFont(env, fontKey = "iran-nastaliq") {
-  if (fontCache.has(fontKey) && otFontCache.has(fontKey)) {
-    return {
-      fontBuffer: fontCache.get(fontKey),
-      otFont: otFontCache.get(fontKey)
-    };
+  const safeKey = FONTS[fontKey] ? fontKey : "iran-nastaliq";
+  if (fontCache.has(safeKey)) {
+    return fontCache.get(safeKey);
   }
 
-  const kvKey = FONTS[fontKey]?.key || "font:iran-nastaliq";
+  const kvKey = FONTS[safeKey].key;
   const data = await env.PREFS.get(kvKey, { type: "arrayBuffer" });
   if (!data) {
     throw new Error(`Font data not found in KV for key: ${kvKey}`);
   }
 
   const otFont = opentype.parse(data);
-  fontCache.set(fontKey, data);
-  otFontCache.set(fontKey, otFont);
+  const hbBlob = new hb.Blob(data);
+  const hbFace = new hb.Face(hbBlob);
+  const hbFont = new hb.Font(hbFace);
 
-  return { fontBuffer: data, otFont };
+  const entry = { fontBuffer: data, otFont, hbFace, hbFont, upem: hbFace.upem };
+  fontCache.set(safeKey, entry);
+  return entry;
 }
 
-function shapeSegment(hb, font, otFont, text, fontSize, upem) {
+/**
+ * Inspect PNG or JPEG binary header to read pixel dimensions without decoding.
+ */
+export function extractImageDimensions(uint8) {
+  if (!uint8 || uint8.length < 24) return null;
+  // PNG signature: 89 50 4E 47
+  if (uint8[0] === 0x89 && uint8[1] === 0x50 && uint8[2] === 0x4E && uint8[3] === 0x47) {
+    const view = new DataView(uint8.buffer, uint8.byteOffset, uint8.byteLength);
+    return { width: view.getUint32(16, false), height: view.getUint32(20, false), mime: "image/png" };
+  }
+  // JPEG SOI: FF D8
+  if (uint8[0] === 0xFF && uint8[1] === 0xD8) {
+    let i = 2;
+    while (i + 9 < uint8.length) {
+      if (uint8[i] !== 0xFF) break;
+      const marker = uint8[i + 1];
+      if (marker === 0xD9 || marker === 0xDA) break;
+      const len = (uint8[i + 2] << 8) | uint8[i + 3];
+      // SOF0..SOF3, SOF5..SOF7, SOF9..SOF11, SOF13..SOF15
+      if ((marker >= 0xC0 && marker <= 0xCF) && marker !== 0xC4 && marker !== 0xC8 && marker !== 0xCC) {
+        const height = (uint8[i + 5] << 8) | uint8[i + 6];
+        const width = (uint8[i + 7] << 8) | uint8[i + 8];
+        return { width, height, mime: "image/jpeg" };
+      }
+      if (len < 2) break;
+      i += 2 + len;
+    }
+  }
+  return null;
+}
+
+function shapeSegment(fontEntry, rawText, fontSize) {
+  const { otFont, hbFont, upem } = fontEntry;
+  const shapedInput = applyArabicPresentationForms(rawText, otFont);
   const scale = fontSize / upem;
+
   const buffer = new hb.Buffer();
-  buffer.addText(text);
+  buffer.addText(shapedInput);
   buffer.guessSegmentProperties();
   buffer.setDirection(hb.Direction.RTL);
   buffer.setScript(hb.otTagToScript("arab"));
   buffer.setLanguage("fa");
-  hb.shape(font, buffer);
+  hb.shape(hbFont, buffer);
 
   const infos = buffer.getGlyphInfos();
   const positions = buffer.getGlyphPositions();
 
-  let glyphs = [];
+  const glyphs = [];
   let cursorX = 0;
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
 
   for (let i = 0; i < infos.length; i++) {
     const gid = infos[i].codepoint;
@@ -94,10 +117,14 @@ function shapeSegment(hb, font, otFont, text, fontSize, upem) {
   }
 
   if (minX === Infinity) {
-    minX = 0; maxX = cursorX; minY = 0; maxY = fontSize;
+    minX = 0;
+    maxX = cursorX;
+    minY = 0;
+    maxY = fontSize;
   }
 
   return {
+    text: rawText,
     glyphs,
     width: maxX - minX,
     naturalWidth: cursorX,
@@ -105,75 +132,155 @@ function shapeSegment(hb, font, otFont, text, fontSize, upem) {
     maxX,
     minY,
     maxY,
-    scale
   };
 }
 
-function calculateCanvasSize(naturalW, naturalH, ratio) {
+/**
+ * Gently stretch a short hemistich toward targetWidth using valid Kashida slots
+ * without ever overshooting targetWidth.
+ */
+function justifyHemistich(fontEntry, rawText, fontSize, targetWidth) {
+  const initial = shapeSegment(fontEntry, rawText, fontSize);
+  if (initial.width >= targetWidth * 0.92 || rawText.length < 4) {
+    return initial;
+  }
+
+  const probe = shapeSegment(fontEntry, stretchWithKashida(rawText, 1), fontSize);
+  const deltaPerTatweel = probe.width - initial.width;
+  if (deltaPerTatweel <= 0.5) {
+    return initial;
+  }
+
+  const gap = targetWidth * 0.96 - initial.width;
+  const repeats = Math.min(10, Math.max(1, Math.floor(gap / deltaPerTatweel)));
+  const stretched = shapeSegment(fontEntry, stretchWithKashida(rawText, repeats), fontSize);
+  return stretched.width <= targetWidth * 1.03 ? stretched : initial;
+}
+
+/**
+ * Wrap long single prose lines by word count/width while preserving short lines & poetry.
+ */
+function wrapProseLine(fontEntry, line, fontSize, maxWidthPx) {
+  const words = line.trim().split(/\s+/);
+  if (words.length <= 4) return [line.trim()];
+
+  const whole = shapeSegment(fontEntry, line.trim(), fontSize);
+  if (whole.width <= maxWidthPx) return [line.trim()];
+
+  const wrapped = [];
+  let current = "";
+
+  for (const w of words) {
+    const candidate = current ? `${current} ${w}` : w;
+    if (current && shapeSegment(fontEntry, candidate, fontSize).width > maxWidthPx) {
+      wrapped.push(current);
+      current = w;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) wrapped.push(current);
+  return wrapped;
+}
+
+function calculateCanvasSize(naturalW, naturalH, ratio, customAspect = null) {
   let finalW = naturalW;
   let finalH = naturalH;
 
-  const r = (ratio || "auto").toLowerCase().trim();
+  const r = resolveRatio(ratio) || "auto";
+  let targetAspect = customAspect;
 
-  if (r === "square" || r === "1:1" || r === "profile" || r === "post") {
-    const s = Math.max(naturalW, naturalH);
-    finalW = s;
-    finalH = s;
-  } else if (r === "story" || r === "vertical" || r === "9:16") {
-    const target = 9 / 16;
-    if (naturalW / naturalH > target) {
+  if (!targetAspect) {
+    if (r === "square") targetAspect = 1;
+    else if (r === "story") targetAspect = 9 / 16;
+    else if (r === "horizontal") targetAspect = 16 / 9;
+  }
+
+  if (targetAspect && targetAspect > 0) {
+    if (naturalW / naturalH > targetAspect) {
       finalW = naturalW;
-      finalH = Math.ceil(naturalW / target);
+      finalH = Math.ceil(naturalW / targetAspect);
     } else {
       finalH = naturalH;
-      finalW = Math.ceil(naturalH * target);
-    }
-  } else if (r === "horizontal" || r === "banner" || r === "16:9") {
-    const target = 16 / 9;
-    if (naturalW / naturalH < target) {
-      finalH = naturalH;
-      finalW = Math.ceil(naturalH * target);
-    } else {
-      finalW = naturalW;
-      finalH = Math.ceil(naturalW / target);
+      finalW = Math.ceil(naturalH * targetAspect);
     }
   }
 
-  const offsetX = Math.round((finalW - naturalW) / 2);
-  const offsetY = Math.round((finalH - naturalH) / 2);
-
-  return { finalW, finalH, offsetX, offsetY };
+  return {
+    finalW,
+    finalH,
+    offsetX: Math.round((finalW - naturalW) / 2),
+    offsetY: Math.round((finalH - naturalH) / 2),
+    normalizedRatio: r
+  };
 }
 
-export async function renderNastaliq(env, rawText, options = {}) {
+function renderGlyphGroup(otFont, seg, baseX, baseY, fontSize, fillAttr) {
+  const paths = [];
+  for (const g of seg.glyphs) {
+    const glyph = otFont.glyphs.get(g.gid);
+    if (!glyph) continue;
+    const d = glyph.getPath(baseX + g.gx, baseY - g.gy, fontSize).toPathData(2);
+    if (d) paths.push(`<path d="${d}" fill="${fillAttr}"/>`);
+  }
+  return paths;
+}
+
+export async function renderNastaliq(env, rawInputText, options = {}) {
   await initEngines();
+
   const {
     fontKey = "iran-nastaliq",
     theme = "classic",
-    fontSize = 54,
-    padding = 60,
+    fontSize: rawFontSize = 54,
+    padding: rawPadding = 64,
     transparent = false,
-    ratio = "auto"
+    ratio = "auto",
+    justify = false,
+    signature: explicitSignature = "",
+    fgColor = null,
+    bgColor = null,
+    frame = null,
+    hd = true,
+    maxSide = null,
+    format = "png",
+    bgImageBase64 = null,
+    bgImageMime = "image/jpeg",
+    bgImageAspect = null,
   } = options;
 
-  const { fontBuffer, otFont } = await getFont(env, fontKey);
+  const fontSize = Math.min(120, Math.max(24, Number(rawFontSize) || 54));
   const selectedTheme = THEMES[theme] || THEMES.classic;
   const isTransparent = transparent || selectedTheme.bg === "transparent";
+  const hasOrnateFrame = !isTransparent && !bgImageBase64 && (frame === "tazhib" || selectedTheme.frame === "tazhib");
+  const padding = hasOrnateFrame ? Math.max(rawPadding, 76) : rawPadding;
 
-  const blob = new hb.Blob(fontBuffer);
-  const face = new hb.Face(blob);
-  const font = new hb.Font(face);
+  const fontEntry = await getFont(env, fontKey);
+  const { otFont } = fontEntry;
 
-  // Normalize couplets: replace // with newline
-  const normalizedText = rawText.replace(/\s*\/\/\s*/g, "\n");
-  const rawLines = normalizedText.split("\n");
+  // Bounded input preprocessing & signature extraction (`-- شاعر`)
+  const clampedInput = String(rawInputText || "").slice(0, MAX_TEXT_CHARS);
+  let normalizedText = clampedInput.replace(/\s*\/\/\s*/g, "\n");
+  let rawLines = normalizedText.split("\n").slice(0, MAX_LINES);
+
+  let signatureText = (explicitSignature || "").trim().slice(0, 80);
+  if (!signatureText && rawLines.length > 1) {
+    const lastTrim = rawLines[rawLines.length - 1].trim();
+    const sigMatch = lastTrim.match(/^(?:--|—)\s*(.+)$/);
+    if (sigMatch) {
+      signatureText = sigMatch[1].trim();
+      rawLines = rawLines.slice(0, -1);
+    }
+  }
+
   const isPoetry = rawLines.some(l => l.includes("/"));
-
-  let items = [];
+  const items = [];
   let maxCol1 = 0;
   let maxCol2 = 0;
   let maxAscent = 0;
   let minDescent = 0;
+
+  const maxProseWidth = Math.max(760, fontSize * 14);
 
   for (const line of rawLines) {
     const trimmed = line.trim();
@@ -185,113 +292,190 @@ export async function renderNastaliq(env, rawText, options = {}) {
     if (trimmed.includes("/")) {
       const parts = trimmed.split("/").map(s => s.trim()).filter(Boolean);
       if (parts.length >= 2) {
-        // Hemistich 1 (Right) and Hemistich 2 (Left)
-        const h1 = shapeSegment(hb, font, otFont, parts[0], fontSize, face.upem);
-        const h2 = shapeSegment(hb, font, otFont, parts[1], fontSize, face.upem);
+        const h1 = shapeSegment(fontEntry, parts[0], fontSize);
+        const h2 = shapeSegment(fontEntry, parts[1], fontSize);
         maxCol1 = Math.max(maxCol1, h1.width);
         maxCol2 = Math.max(maxCol2, h2.width);
         maxAscent = Math.max(maxAscent, h1.maxY, h2.maxY);
         minDescent = Math.min(minDescent, h1.minY, h2.minY);
-        items.push({ type: "couplet", h1, h2 });
+        items.push({ type: "couplet", text1: parts[0], text2: parts[1], h1, h2 });
         continue;
       }
     }
 
-    const h = shapeSegment(hb, font, otFont, trimmed, fontSize, face.upem);
-    maxCol1 = Math.max(maxCol1, h.width);
-    maxAscent = Math.max(maxAscent, h.maxY);
-    minDescent = Math.min(minDescent, h.minY);
-    items.push({ type: "single", h });
+    const wrappedLines = wrapProseLine(fontEntry, trimmed, fontSize, maxProseWidth);
+    for (const wl of wrappedLines) {
+      const h = shapeSegment(fontEntry, wl, fontSize);
+      maxCol1 = Math.max(maxCol1, h.width);
+      maxAscent = Math.max(maxAscent, h.maxY);
+      minDescent = Math.min(minDescent, h.minY);
+      items.push({ type: "single", h });
+    }
   }
 
-  const centerGap = isPoetry ? Math.max(80, fontSize * 1.6) : 0;
+  // Optional smart Kashida balancing across poetry columns
+  if (justify && isPoetry) {
+    for (const item of items) {
+      if (item.type !== "couplet") continue;
+      item.h1 = justifyHemistich(fontEntry, item.text1, fontSize, maxCol1);
+      item.h2 = justifyHemistich(fontEntry, item.text2, fontSize, maxCol2);
+      maxCol1 = Math.max(maxCol1, item.h1.width);
+      maxCol2 = Math.max(maxCol2, item.h2.width);
+      maxAscent = Math.max(maxAscent, item.h1.maxY, item.h2.maxY);
+      minDescent = Math.min(minDescent, item.h1.minY, item.h2.minY);
+    }
+  }
+
+  const centerGap = isPoetry ? Math.max(76, fontSize * 1.5) : 0;
   const contentWidth = isPoetry
     ? Math.max(maxCol1 + centerGap + maxCol2, 420)
     : Math.max(maxCol1, 260);
 
   const lineSpacing = fontSize * 1.65;
-  const coupletExtraGap = isPoetry ? fontSize * 0.8 : 0;
+  const coupletExtraGap = isPoetry ? fontSize * 0.75 : 0;
 
-  let svgPaths = [];
+  let sigSeg = null;
+  const sigFontSize = Math.round(fontSize * 0.56);
+  if (signatureText) {
+    sigSeg = shapeSegment(fontEntry, `— ${signatureText}`, sigFontSize);
+  }
+
+  // Natural height includes main block + optional signature line below
   let currentY = 0;
-
   for (let idx = 0; idx < items.length; idx++) {
     const item = items[idx];
-
     if (item.type === "empty") {
       currentY += lineSpacing;
-      continue;
-    }
-
-    if (item.type === "couplet") {
-      // Poetry Layout:
-      // Column 1 (Right): starts at (maxCol2 + centerGap) and right-aligns
-      const col1Origin = maxCol2 + centerGap;
-      const h1BaseX = col1Origin + (maxCol1 - item.h1.width) - item.h1.minX;
-
-      // Column 2 (Left): starts at 0 and right-aligns
-      const h2BaseX = (maxCol2 - item.h2.width) - item.h2.minX;
-
-      for (const g of item.h1.glyphs) {
-        const glyph = otFont.glyphs.get(g.gid);
-        if (glyph) {
-          const d = glyph.getPath(padding + h1BaseX + g.gx, padding + maxAscent + currentY - g.gy, fontSize).toPathData(2);
-          if (d) svgPaths.push(`<path d="${d}" fill="${selectedTheme.text}"/>`);
-        }
-      }
-
-      for (const g of item.h2.glyphs) {
-        const glyph = otFont.glyphs.get(g.gid);
-        if (glyph) {
-          const d = glyph.getPath(padding + h2BaseX + g.gx, padding + maxAscent + currentY - g.gy, fontSize).toPathData(2);
-          if (d) svgPaths.push(`<path d="${d}" fill="${selectedTheme.text}"/>`);
-        }
-      }
-
-      // Add couplet gap between consecutive couplets
+    } else if (item.type === "couplet") {
       const isNextCouplet = idx < items.length - 1 && items[idx + 1].type === "couplet";
       currentY += lineSpacing + (isNextCouplet ? coupletExtraGap : 0);
-    } else if (item.type === "single") {
-      // Centered prose/single hemistich
-      const singleBaseX = (contentWidth - item.h.width) / 2 - item.h.minX;
-      for (const g of item.h.glyphs) {
-        const glyph = otFont.glyphs.get(g.gid);
-        if (glyph) {
-          const d = glyph.getPath(padding + singleBaseX + g.gx, padding + maxAscent + currentY - g.gy, fontSize).toPathData(2);
-          if (d) svgPaths.push(`<path d="${d}" fill="${selectedTheme.text}"/>`);
-        }
-      }
+    } else {
       currentY += lineSpacing;
     }
   }
 
-  const naturalWidth = Math.ceil(contentWidth + padding * 2);
-  const naturalHeight = Math.ceil(currentY - lineSpacing + maxAscent - minDescent + padding * 2);
+  const sigExtraHeight = sigSeg ? sigFontSize * 1.45 : 0;
+  const naturalWidth = Math.ceil(Math.max(contentWidth, sigSeg ? sigSeg.width + 20 : 0) + padding * 2);
+  const naturalHeight = Math.ceil(Math.max(0, currentY - lineSpacing) + maxAscent - minDescent + sigExtraHeight + padding * 2);
 
-  const { finalW, finalH, offsetX, offsetY } = calculateCanvasSize(naturalWidth, naturalHeight, ratio);
+  const effectiveBgAspect = !isTransparent && bgImageBase64 ? bgImageAspect : null;
+  const { finalW, finalH, offsetX, offsetY, normalizedRatio } = calculateCanvasSize(
+    naturalWidth,
+    naturalHeight,
+    ratio,
+    effectiveBgAspect
+  );
 
-  const bgElement = isTransparent
-    ? ""
-    : `<rect width="100%" height="100%" fill="${selectedTheme.bg}" rx="16" stroke="${selectedTheme.border}" stroke-width="2"/>`;
+  const visuals = buildThemeVisuals(selectedTheme, finalW, finalH, {
+    isTransparent,
+    fgColor,
+    bgColor,
+    frameOverride: frame,
+    bgImageBase64: isTransparent ? null : bgImageBase64,
+    bgImageMime
+  });
+
+  // Generate vector paths centered nicely inside the natural box
+  const svgPaths = [];
+  let yCursor = 0;
+  for (let idx = 0; idx < items.length; idx++) {
+    const item = items[idx];
+    if (item.type === "empty") {
+      yCursor += lineSpacing;
+      continue;
+    }
+
+    if (item.type === "couplet") {
+      const col1Origin = maxCol2 + centerGap;
+      const h1BaseX = padding + col1Origin + (maxCol1 - item.h1.width) - item.h1.minX;
+      const h2BaseX = padding + (maxCol2 - item.h2.width) - item.h2.minX;
+      const baselineY = padding + maxAscent + yCursor;
+
+      svgPaths.push(...renderGlyphGroup(otFont, item.h1, h1BaseX, baselineY, fontSize, visuals.inkFill));
+      svgPaths.push(...renderGlyphGroup(otFont, item.h2, h2BaseX, baselineY, fontSize, visuals.inkFill));
+
+      const isNextCouplet = idx < items.length - 1 && items[idx + 1].type === "couplet";
+      yCursor += lineSpacing + (isNextCouplet ? coupletExtraGap : 0);
+    } else if (item.type === "single") {
+      const singleBaseX = padding + (contentWidth - item.h.width) / 2 - item.h.minX;
+      const baselineY = padding + maxAscent + yCursor;
+      svgPaths.push(...renderGlyphGroup(otFont, item.h, singleBaseX, baselineY, fontSize, visuals.inkFill));
+      yCursor += lineSpacing;
+    }
+  }
+
+  if (sigSeg) {
+    const sigX = padding - sigSeg.minX;
+    const sigY = padding + Math.max(0, yCursor - lineSpacing) + maxAscent - minDescent + sigFontSize * 1.15;
+    const sigPaths = renderGlyphGroup(otFont, sigSeg, sigX, sigY, sigFontSize, visuals.signatureFill);
+    svgPaths.push(`<g opacity="0.82">${sigPaths.join("")}</g>`);
+  }
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${finalW}" height="${finalH}" viewBox="0 0 ${finalW} ${finalH}">
-  ${bgElement}
+  ${visuals.defs}
+  ${visuals.bgSvg}
   <g transform="translate(${offsetX}, ${offsetY})">
     ${svgPaths.join("\n    ")}
   </g>
 </svg>`;
 
-  const rsvg = new resvg.Resvg(svg);
+  if (format === "svg") {
+    return {
+      svg,
+      pngBuffer: null,
+      width: finalW,
+      height: finalH,
+      isPoetry,
+      isTransparent,
+      ratio: normalizedRatio,
+      theme: selectedTheme
+    };
+  }
+
+  // Compute crisp pixel export sizing (1080px social HD or 512px sticker limit)
+  const resvgOpts = {};
+  let outW = finalW;
+  let outH = finalH;
+
+  if (maxSide && maxSide > 0) {
+    const safeMax = Math.min(2048, maxSide);
+    if (finalW >= finalH) {
+      resvgOpts.fitTo = { mode: "width", value: safeMax };
+      outH = Math.round((finalH * safeMax) / finalW);
+      outW = safeMax;
+    } else {
+      resvgOpts.fitTo = { mode: "height", value: safeMax };
+      outW = Math.round((finalW * safeMax) / finalH);
+      outH = safeMax;
+    }
+  } else if (hd && (normalizedRatio === "square" || normalizedRatio === "story" || normalizedRatio === "horizontal")) {
+    const targetW = normalizedRatio === "horizontal" ? 1920 : 1080;
+    if (finalW < targetW) {
+      resvgOpts.fitTo = { mode: "width", value: targetW };
+      outH = Math.round((finalH * targetW) / finalW);
+      outW = targetW;
+    } else if (finalW > 2400) {
+      resvgOpts.fitTo = { mode: "width", value: 2400 };
+      outH = Math.round((finalH * 2400) / finalW);
+      outW = 2400;
+    }
+  } else if (finalW > 2400) {
+    resvgOpts.fitTo = { mode: "width", value: 2400 };
+    outH = Math.round((finalH * 2400) / finalW);
+    outW = 2400;
+  }
+
+  const rsvg = new resvg.Resvg(svg, resvgOpts);
   const pngBuffer = rsvg.render().asPng();
 
   return {
     svg,
     pngBuffer,
-    width: finalW,
-    height: finalH,
+    width: outW,
+    height: outH,
     isPoetry,
     isTransparent,
-    ratio: ratio || "auto",
+    ratio: normalizedRatio,
     theme: selectedTheme
   };
 }
